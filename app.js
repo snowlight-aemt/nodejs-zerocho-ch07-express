@@ -4,7 +4,6 @@ const app = express();
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const multer = require('multer');
 
 app.set('port', process.env.PORT || 3000);
 
@@ -22,7 +21,40 @@ app.use(session({
     },
     name: 'connect.sid',
 }));
-app.use(multer().array());
+
+const multer = require('multer');
+const fs = require('fs');
+
+try {
+    fs.readdirSync('uploads');
+} catch (error) {
+    console.error('uploads 풀더가 없어 uploads 풀더를 생성합니다.');
+    fs.mkdirSync(('uploads'));
+}
+const upload = multer({
+    storage: multer.diskStorage({
+        destination(req, file, done) {
+            done(null, 'uploads/');
+        },
+        filename(req, file, done) {
+            const ext = path.extname(file.originalname);
+            done(null, path.basename(file.originalname, ext) + Date.now() + ext);
+        },
+    }),
+    limits: {fileSize: 5 * 1024 * 1024},
+});
+
+app.get('/upload', (req, res) => {
+    res.sendFile(path.join(__dirname, 'multipart.html'));
+});
+// upload.none() // 이미지 파일 없이 multipart/form-data 를 사용하는 경우
+// upload.single('image') // 이미지 한 개 , 이름 하 나
+// upload.array('image') // 이미지 여러개 , 이름 하 나
+// upload.fields([{name: 'image1',}, {name: 'image2',}]) // 이미지 여러개 , 이름 여러개
+app.post('/upload', upload.single('image'), (req, res) => {
+    console.log(req.file);
+    res.send('ok');
+})
 
 // app.use((req, res) => {
 //     console.log('모든 요청에 실해하고 싶어요.');
@@ -131,8 +163,9 @@ app.listen(app.get('port'), () => {
 //  * app.use('/요청경로', express.static(__dirname, 'public'));
 //  * 요청한 파일이 존재하면 여기서 응답하고 끝.. (존재하면 응답, 없으면 next() 하여 다음 미들웨어로...)
 
-// ## CH 6-8 Middleware 라이브러리 적용 2
+// ## CH 6-8 Middleware 라이브러리 적용 3
 // express-session // 세션 처리
+// multer // 이미지 처리
 //
 // ### 미들웨어 확장 하기
 // ```
@@ -144,6 +177,11 @@ app.listen(app.get('port'), () => {
 // }
 // });
 // ```
+
+// ## CH 6-8 Middleware 라이브러리 적용 4
+// form 태그의 enctype 이 `multipart/form-data 인 경우
+// multer // 이미지 처리 // Multipart form data
+
 
 // 팁
 // 미들웨어간 데이터 전달하기
