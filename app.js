@@ -1,8 +1,15 @@
 const express = require('express');
 const path = require('path');
 const app = express();
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 
 app.set('port', process.env.PORT || 3000);
+
+app.use(morgan('dev'));
+app.use(cookieParser('zerochoSecret'));
+app.use(express.json()); // body-parser 대신에 (express 에 포함됨.)
+app.use(express.urlencoded({ extended: true }));
 
 // app.use((req, res) => {
 //     console.log('모든 요청에 실해하고 싶어요.');
@@ -43,6 +50,19 @@ app.get('/category*', (req, res) => {
 });
 
 app.get('/', (req, res, next) => {
+    // // cookie-parser 사용법
+    // req.cookies;
+    // req.signedCookies;
+    // res.cookies('name', encodeURIComponent(name), {
+    //     expires: new Date(),
+    //     httpOnly: true,
+    //     path: '/',
+    // })
+    // res.clearCookie('name', encodeURIComponent(name), {
+    //     httpOnly: true,
+    //     path: '/',
+    // })
+    //
     if (true) {
         next('route'); // true: 아래의 메소드(미들웨어) 가 실행됨 - res.json
     } else {
@@ -81,6 +101,13 @@ app.use((err, req, res, next) => {
 app.listen(app.get('port'), () => {
     console.log(`3000 번 포트로 서버가 실행됩니다.`);
 });
+
+// ## CH 6-6 Middleware 라이브러리 적용
+// morgan 요청, 응답 로그
+// cookie-parser 쿠키를 쉽게 다룰수 있다.
+// body-parser express 에 포함됨. 더 이상 사용하지 않음.
+//  * express.json(); // JSON 타입
+//  * express.urlencoded({ extended: true }); // FORM 타입 true 몇 qs, false 면 querystring / 이미지는 처리 못 함 다른 라이브러리
 
 // ## CH 6-5
 // ### `next()` 를 호출해야 다음 코드로(넘어감)
