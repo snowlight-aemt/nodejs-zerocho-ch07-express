@@ -12,6 +12,10 @@ app.use((req, res, next) => {
     next();
 });
 
+app.get('/error', (req, res) => {
+    throw new Error();
+})
+
 app.get('/category/javascript', (req, res, next) => {
     // /category/javascript
     res.send('hello javascript');
@@ -38,13 +42,21 @@ app.get('/profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.use((req, res, next) => {
+    res.status(404).send('404 ?');
+});
+
+app.use((err, req, res, next) => {
+    res.status(500).send('에러가 발생...');
+})
+
 app.listen(app.get('port'), () => {
     console.log(`3000 번 포트로 서버가 실행됩니다.`);
 });
 
 // ## CH 6-3
 // ### app.use(...), app.get(...),
-// * 공통으로 처리하고 싶은 내용(로직)있는 경우 (app.use(...))
+// * 공통으로 처리하고 싶은 내용(로직)있는 경우 <<-- 모든 요청에 대해서 (app.use(...))
 // * 요청을 받는(Router) 모든 부분에서 공통 로직을 실행할 수 있다. `app.use(...)`
 //  * **NodeJS 는 위에서 부터 밑으로 실행된다.** 하지만 `path` 가 맞지 않은 함수를 실행하지 않는다
 //    또한 `next` 를 사용해야만 다음 미들웨어로 넘어간다.
