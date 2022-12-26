@@ -3,21 +3,34 @@ const path = require('path');
 const app = express();
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
+const multer = require('multer');
 
 app.set('port', process.env.PORT || 3000);
 
 app.use(morgan('dev'));
+app.use(express.static('public')); // 미들웨어간에 순서 중요.. 요청한 파일이 존재하면 여기서 응답을 한다.
 app.use(cookieParser('zerochoSecret'));
 app.use(express.json()); // body-parser 대신에 (express 에 포함됨.)
 app.use(express.urlencoded({ extended: true }));
+app.use(session({
+    resave: false,
+    saveUninitialized: false,
+    secret: 'zerochoSecret',
+    cookie: {
+        httpOnly: true,
+    },
+    name: 'connect.sid',
+}));
+app.use(multer().array());
 
 // app.use((req, res) => {
 //     console.log('모든 요청에 실해하고 싶어요.');
 // });
 app.use((req, res, next) => {
-    console.log('모든 요청에 실해하고 싶어요.');
-    next();
-}
+        console.log('모든 요청에 실해하고 싶어요.');
+        next();
+    }
 // ,(req, res, next) => {
 //     try {
 //         console.log('에러 코드');
@@ -50,6 +63,9 @@ app.get('/category*', (req, res) => {
 });
 
 app.get('/', (req, res, next) => {
+    //  // session 사용법
+    req.session.id = 'hello'; // 요청한 사람만 hello 가 생김.
+
     // // cookie-parser 사용법
     // req.cookies;
     // req.signedCookies;
@@ -102,12 +118,48 @@ app.listen(app.get('port'), () => {
     console.log(`3000 번 포트로 서버가 실행됩니다.`);
 });
 
-// ## CH 6-6 Middleware 라이브러리 적용
+// ## CH 6-6 Middleware 라이브러리 적용 1
 // morgan 요청, 응답 로그
 // cookie-parser 쿠키를 쉽게 다룰수 있다.
 // body-parser express 에 포함됨. 더 이상 사용하지 않음.
 //  * express.json(); // JSON 타입
 //  * express.urlencoded({ extended: true }); // FORM 타입 true 몇 qs, false 면 querystring / 이미지는 처리 못 함 다른 라이브러리
+
+// ## CH 6-7 Middleware 라이브러리 적용 2
+// express.static('public') // 정적 파일 (js, css, ...)
+//  * app.use(express.static('public'));
+//  * app.use('/요청경로', express.static(__dirname, 'public'));
+//  * 요청한 파일이 존재하면 여기서 응답하고 끝.. (존재하면 응답, 없으면 next() 하여 다음 미들웨어로...)
+
+// ## CH 6-8 Middleware 라이브러리 적용 2
+// express-session // 세션 처리
+//
+// ### 미들웨어 확장 하기
+// ```
+// app.use('/', (req, res, next) => {
+// if (req.session.id) {
+//     express.static(__dirname, 'public')(req, res, next);
+// } else {
+//     next();
+// }
+// });
+// ```
+
+// 팁
+// 미들웨어간 데이터 전달하기
+// `req` 나 `res` 객체 안에 값을 넣어 데이터 전달 가능
+// * app.set 과의 차이점: app.set 은 서버 내내 유지, req, res 는 요청 하나 동안만 유지
+// * req.body 나 req.cookies 같은 미들웨어의 데이터와 겹치지 않게 조심
+// ```
+// app.use((req, res, next) => {
+//     // req.session.data = '데이터 넣기'; // 계정에 대한 영구 저장
+//     req.data = '데이터 넣기'; // 하나의 요청 한정
+//     next();
+// }, (req, res, next) => {
+//     console.log(req.data); // 데이터 받기
+//     next();
+// });
+// ```
 
 // ## CH 6-5
 // ### `next()` 를 호출해야 다음 코드로(넘어감)
